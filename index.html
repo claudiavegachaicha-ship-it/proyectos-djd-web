@@ -200,7 +200,7 @@
       <div class="topbar">
         <div>
           <h2>Conexión a base de datos en la nube</h2>
-          <p>Conecta este sistema a Supabase para guardar y cargar la información desde una base de datos online. Usa el API URL base o el API URL con /rest/v1/.</p>
+          <p>Conecta este sistema a Supabase. Después de guardar la conexión una sola vez, cada cambio se guardará automáticamente en la nube y los usuarios podrán recibir la información actualizada.</p>
         </div>
         <span id="cloudBadge" class="cloud-status">☁️ Sin configurar</span>
       </div>
@@ -209,7 +209,7 @@
         <div class="panel-head">
           <div>
             <h3>1. Configuración de Supabase</h3>
-            <p>Pega el API URL o Project URL y la publishable key de tu proyecto. La configuración queda guardada en este navegador.</p>
+            <p>Pega el API URL o Project URL y la publishable key. Luego presiona Guardar conexión una sola vez. Después, el sistema sincroniza automáticamente.</p>
           </div>
         </div>
         <div class="body">
@@ -220,8 +220,11 @@
             <div class="full actions" style="justify-content:flex-end">
               <button class="btn light" type="button" onclick="clearCloudConfig()">Limpiar conexión</button>
               <button class="btn" type="button" onclick="saveCloudConfig()">Guardar conexión</button>
-              <button class="btn ok" type="button" onclick="cloudSaveNow(true)">Subir datos actuales</button>
-              <button class="btn light" type="button" onclick="cloudLoad(true)">Cargar desde nube</button>
+              <button class="btn ok" type="button" onclick="cloudSaveNow(true)">Subir ahora</button>
+              <button class="btn light" type="button" onclick="cloudLoad(true)">Cargar ahora</button>
+            </div>
+            <div class="full" style="margin-top:8px;background:#f2fbff;border:1px solid #d8eef7;border-radius:16px;padding:14px;color:#24506f;font-size:13px;line-height:1.5">
+              <b>Sincronización automática:</b> después de guardar la conexión, cada proyecto, actividad, documento, registro, material o postventa que se modifique se guardará automáticamente en Supabase. Los botones “Subir ahora” y “Cargar ahora” quedan solo como respaldo manual.
             </div>
           </div>
         </div>
@@ -347,6 +350,8 @@ const KEY='djd_sistema_integral_10_proyectos_v1';
 const CLOUD_CFG='djd_supabase_config_v1';
 const CLOUD_ROW_ID='main';
 let cloudClient=null, cloudConfig=JSON.parse(localStorage.getItem(CLOUD_CFG)||'null'), cloudTimer=null, cloudBusy=false;
+let cloudPollTimer=null, cloudRemoteStamp='', lastLocalChangeAt=0;
+const CLOUD_POLL_MS=12000;
 const STAGES=['Solicitud','Cotización','Aprobación','Planificación','Ejecución','Validación','Entrega','Postventa'];
 const FOLDERS=[['solicitud','Solicitud'],['cotizacion','Cotización'],['aprobacion','Orden / aprobación'],['planos','Planos'],['evidencias','Evidencias'],['informe','Informe técnico'],['garantia','Garantía'],['comprobante','Comprobantes'],['postventa','Postventa']];
 const DEMO_DATA = [
@@ -2074,7 +2079,11 @@ const DEMO_DATA = [
 let data=JSON.parse(localStorage.getItem(KEY)||JSON.stringify(DEMO_DATA));let selected=null,tab='tasks';
 const $=id=>document.getElementById(id),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7),today=()=>new Date().toISOString().slice(0,10);
 const fmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString('es-PE'):'-',days=(a,b)=>a&&b?Math.max(0,Math.ceil((new Date(b)-new Date(a))/86400000)):0,money=n=>n?`S/ ${Number(n).toLocaleString('es-PE',{minimumFractionDigits:2})}`:'-';
-function save(){localStorage.setItem(KEY,JSON.stringify(data));scheduleCloudSave()}
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(data));
+  lastLocalChangeAt=Date.now();
+  scheduleCloudSave();
+}
 function msg(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1700)}
 function updateCloudBadge(text,type=''){let b=$('cloudBadge');if(!b)return;b.textContent=text;b.className='cloud-status '+type}
 function fillCloudForm(){if(!$('cloudUrl'))return;$('cloudUrl').value=cloudConfig?.url||'';$('cloudKey').value=cloudConfig?.key||'';$('cloudTable').value=cloudConfig?.table||'djd_app_state'}
@@ -2093,7 +2102,8 @@ function initCloud(){
   if(!cloudConfig?.url||!cloudConfig?.key){updateCloudBadge('☁️ Sin configurar');return false}
   cloudConfig.url=normalizeSupabaseUrl(cloudConfig.url);
   cloudClient={ready:true};
-  updateCloudBadge('☁️ Conectado','ok');
+  updateCloudBadge('☁️ Autoguardado activo','ok');
+  startCloudPolling();
   return true;
 }
 function saveCloudConfig(){
@@ -2105,14 +2115,21 @@ function saveCloudConfig(){
   localStorage.setItem(CLOUD_CFG,JSON.stringify(cloudConfig));
   fillCloudForm();
   initCloud();
-  msg('Conexión guardada');
+  msg('Conexión guardada · autoguardado activo');
+  cloudLoad(false);
 }
+
 function clearCloudConfig(){
   if(!confirm('¿Quitar la conexión a Supabase de este navegador?'))return;
-  localStorage.removeItem(CLOUD_CFG);cloudConfig=null;cloudClient=null;fillCloudForm();updateCloudBadge('☁️ Sin configurar');msg('Conexión eliminada')
+  localStorage.removeItem(CLOUD_CFG);cloudConfig=null;cloudClient=null;stopCloudPolling();fillCloudForm();updateCloudBadge('☁️ Sin configurar');msg('Conexión eliminada')
 }
 function scheduleCloudSave(){
-  if(!cloudClient||cloudBusy)return;clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudSaveNow(false),1200)
+  if(!cloudClient)return;
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(()=>{
+    if(cloudBusy){scheduleCloudSave();return;}
+    cloudSaveNow(false);
+  },1000);
 }
 async function cloudRequest(url,options={}){
   const res=await fetch(url,{...options,headers:{'apikey':cloudConfig.key,'Authorization':'Bearer '+cloudConfig.key,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal',...(options.headers||{})}});
@@ -2127,8 +2144,10 @@ async function cloudSaveNow(show=true){
   if(!cloudClient){if(show)alert('Primero configura Supabase.');return}
   try{
     cloudBusy=true;updateCloudBadge('☁️ Guardando...');
-    await cloudRequest(cloudEndpoint(),{method:'POST',body:JSON.stringify({id:CLOUD_ROW_ID,data:data,updated_at:new Date().toISOString()})});
-    updateCloudBadge('☁️ Sincronizado','ok');if(show)msg('Datos subidos a la nube')
+    const stamp=new Date().toISOString();
+    await cloudRequest(cloudEndpoint(),{method:'POST',body:JSON.stringify({id:CLOUD_ROW_ID,data:data,updated_at:stamp})});
+    cloudRemoteStamp=stamp;
+    updateCloudBadge('☁️ Sincronizado automático','ok');if(show)msg('Datos guardados en la nube')
   }catch(e){console.error(e);updateCloudBadge('⚠️ Error de nube','bad');if(show)alert('No se pudo guardar en la nube: '+(e.message||e))}
   finally{cloudBusy=false}
 }
@@ -2136,13 +2155,40 @@ async function cloudLoad(show=true){
   if(!cloudClient){if(show)alert('Primero configura Supabase.');return}
   try{
     cloudBusy=true;updateCloudBadge('☁️ Cargando...');
-    const url=cloudEndpoint()+`?id=eq.${encodeURIComponent(CLOUD_ROW_ID)}&select=data`;
+    const url=cloudEndpoint()+`?id=eq.${encodeURIComponent(CLOUD_ROW_ID)}&select=data,updated_at`;
     const rows=await cloudRequest(url,{method:'GET',headers:{'Prefer':'return=representation'}});
     if(rows&&rows[0]?.data){
-      data=rows[0].data.map(norm);localStorage.setItem(KEY,JSON.stringify(data));render();updateCloudBadge('☁️ Datos cargados','ok');if(show)msg('Datos cargados desde la nube')
+      data=rows[0].data.map(norm);cloudRemoteStamp=rows[0].updated_at||cloudRemoteStamp;localStorage.setItem(KEY,JSON.stringify(data));render();updateCloudBadge('☁️ Sincronizado automático','ok');if(show)msg('Datos cargados desde la nube')
     }else{await cloudSaveNow(false);if(show)msg('No había datos en nube; se subieron los datos actuales')}
   }catch(e){console.error(e);updateCloudBadge('⚠️ Error de nube','bad');if(show)alert('No se pudo cargar desde la nube: '+(e.message||e))}
   finally{cloudBusy=false}
+}
+async function cloudCheckRemote(){
+  if(!cloudClient||cloudBusy)return;
+  try{
+    const url=cloudEndpoint()+`?id=eq.${encodeURIComponent(CLOUD_ROW_ID)}&select=data,updated_at`;
+    const rows=await cloudRequest(url,{method:'GET',headers:{'Prefer':'return=representation'}});
+    if(!(rows&&rows[0]?.data))return;
+    const remoteStamp=rows[0].updated_at||'';
+    const hasNewRemote=remoteStamp && remoteStamp!==cloudRemoteStamp;
+    const userJustChanged=Date.now()-lastLocalChangeAt<2500;
+    if(hasNewRemote && !userJustChanged){
+      data=rows[0].data.map(norm);
+      cloudRemoteStamp=remoteStamp;
+      localStorage.setItem(KEY,JSON.stringify(data));
+      render();
+      updateCloudBadge('☁️ Datos actualizados','ok');
+      msg('Información actualizada desde la nube');
+    }
+  }catch(e){console.error(e);updateCloudBadge('⚠️ Error de nube','bad')}
+}
+function startCloudPolling(){
+  if(cloudPollTimer)clearInterval(cloudPollTimer);
+  cloudPollTimer=setInterval(cloudCheckRemote,CLOUD_POLL_MS);
+}
+function stopCloudPolling(){
+  if(cloudPollTimer)clearInterval(cloudPollTimer);
+  cloudPollTimer=null;
 }
 function copySQL(){let text=$('sqlBox').innerText;navigator.clipboard?.writeText(text);msg('SQL copiado')}
 function cls(s){return s==='Finalizado'||s==='Aprobado'||s==='Realizado'?'b-done':s==='En proceso'||s==='En revisión'?'b-proc':s==='Atrasado'||s==='Observado'?'b-bad':'b-pend'}
@@ -2189,7 +2235,7 @@ if(currentUser){document.body.classList.remove('locked');startApp()}
 <script>
   // Control de versión para despliegues en Netlify/GitHub.
   // Cuando se actualice el HTML, también se debe actualizar version.json.
-  const APP_VERSION = "1.0.0";
+  const APP_VERSION = "1.0.1";
 
   function showUpdateBanner() {
     if (document.getElementById("updateBanner")) return;

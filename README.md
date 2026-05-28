@@ -14,3 +14,8 @@ Archivos para publicar en Netlify con actualización automática de versión.
    - `version.json`: campo `version`.
 3. Sube los cambios a GitHub.
 4. Netlify publicará automáticamente el mismo enlace.
+
+
+## Actualización 1.0.1
+
+Se agregó sincronización automática con Supabase: después de guardar la conexión, cada cambio se sube a la nube y el sistema revisa periódicamente si hay datos nuevos.
