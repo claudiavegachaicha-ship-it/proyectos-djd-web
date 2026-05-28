@@ -75,6 +75,12 @@
     .cloud-status{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 11px;font-weight:900;font-size:12px;background:#eef4ff;color:var(--blue)}
     .cloud-status.ok{background:#e7f7ef;color:var(--green)}
     .cloud-status.bad{background:#ffe8e2;color:var(--red)}
+
+    .client-mode .admin-only{display:none!important}
+    .client-mode .nav{margin-top:18px}
+    .client-view-note{background:#f2fbff;border:1px solid #d8eef7;border-radius:18px;padding:14px 16px;color:#24506f;font-size:13px;line-height:1.5;margin-bottom:16px}
+    .credential-box{background:#fbfdff;border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:8px}
+    .credential-box code{background:#eef6fb;color:var(--blue-dark);padding:4px 7px;border-radius:8px;font-weight:900;word-break:break-all}
     @media(max-width:1180px){.app{grid-template-columns:1fr}aside{position:relative;height:auto}.stats{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:repeat(2,1fr)}.toolbar,.form,.split,.detail-meta{grid-template-columns:1fr}.wide{grid-column:auto}.topbar{flex-direction:column;align-items:flex-start}}
     @media(max-width:720px){main{padding:16px}.stats,.cards,.folder-grid{grid-template-columns:1fr}table{display:block;overflow-x:auto;white-space:nowrap}}    /* Login multiusuario */
     body.locked .app{display:none}
@@ -161,9 +167,9 @@
     <div class="nav">
       <button class="active" onclick="go('dashboard',this)">📊 Dashboard</button>
       <button onclick="go('projects',this)">📋 Proyectos</button>
-      <button onclick="openNewProject()">➕ Registrar proyecto</button>
+      <button class="admin-only" onclick="openNewProject()">➕ Registrar proyecto</button>
       <button onclick="go('docs',this)">📂 Documentos</button>
-      <button onclick="go('cloud',this)">☁️ Nube</button>
+      <button class="admin-only" onclick="go('cloud',this)">☁️ Nube</button>
     </div>
   </aside>
 
@@ -171,16 +177,16 @@
     <section id="dashboard" class="screen active">
       <div class="topbar">
         <div><h2>Panel general</h2><p>Monitorea el avance de proyectos, pendientes, documentos cargados y seguimientos postventa.</p></div>
-        <div class="actions"><button class="btn" onclick="openNewProject()">➕ Nuevo</button><button class="btn light" onclick="exportData()">⬇️ Exportar</button><label class="btn light" for="importFile">⬆️ Importar</label><input id="importFile" class="hidden" type="file" accept="application/json" onchange="importData(event)"></div>
+        <div class="actions admin-only"><button class="btn" onclick="openNewProject()">➕ Nuevo</button><button class="btn light" onclick="exportData()">⬇️ Exportar</button><label class="btn light" for="importFile">⬆️ Importar</label><input id="importFile" class="hidden" type="file" accept="application/json" onchange="importData(event)"></div>
       </div>
       <div class="grid stats">
         <div class="stat"><span>Proyectos</span><b id="stProjects">0</b></div><div class="stat"><span>Activos</span><b id="stActive">0</b></div><div class="stat"><span>Atrasados</span><b id="stLate">0</b></div><div class="stat"><span>Documentos</span><b id="stDocs">0</b></div><div class="stat"><span>Postventa pendiente</span><b id="stAfter">0</b></div>
       </div>
-      <div class="panel"><div class="panel-head"><div><h3>Últimos proyectos</h3><p>Accede rápido a la gestión integral de cada proyecto.</p></div><button class="btn light" onclick="loadDemo()">Restaurar 10 proyectos</button></div><div class="body"><div id="recentProjects" class="grid cards"></div></div></div>
+      <div class="panel"><div class="panel-head"><div><h3>Últimos proyectos</h3><p>Accede rápido a la gestión integral de cada proyecto.</p></div><button class="btn light admin-only" onclick="loadDemo()">Restaurar 10 proyectos</button></div><div class="body"><div id="recentProjects" class="grid cards"></div></div></div>
     </section>
 
     <section id="projects" class="screen">
-      <div class="topbar"><div><h2>Proyectos</h2><p>Listado operativo con etapa, responsable, estado, fechas y avance.</p></div><button class="btn" onclick="openNewProject()">➕ Registrar proyecto</button></div>
+      <div class="topbar"><div><h2>Proyectos</h2><p>Listado operativo con etapa, responsable, estado, fechas y avance.</p></div><button class="btn admin-only" onclick="openNewProject()">➕ Registrar proyecto</button></div>
       <div class="panel"><div class="toolbar"><input id="q" placeholder="Buscar cliente, código o servicio..." oninput="renderProjects()"><select id="fStage" onchange="renderProjects()"><option value="">Todas las etapas</option></select><select id="fStatus" onchange="renderProjects()"><option value="">Todos los estados</option></select><select id="fResp" onchange="renderProjects()"><option value="">Todos los responsables</option></select><button class="btn light" onclick="clearFilters()">Limpiar</button></div><div style="overflow:auto"><table><thead><tr><th>Proyecto</th><th>Responsable</th><th>Etapa</th><th>Estado</th><th>Fechas</th><th>Avance</th><th>Acciones</th></tr></thead><tbody id="projectRows"></tbody></table></div></div>
     </section>
 
@@ -190,12 +196,12 @@
         <input type="hidden" id="pid"><div><label>Código</label><input id="code" required></div><div><label>Cliente / Proyecto</label><input id="client" required></div><div><label>Tipo de cliente</label><select id="clientType"><option>Propietario residencial</option><option>Arquitecto aliado</option><option>Empresa industrial</option><option>Cliente eventual</option></select></div>
         <div><label>Servicio</label><select id="service" required><option>Sistema eléctrico residencial</option><option>Mantenimiento preventivo</option><option>Mantenimiento correctivo</option><option>Pozo a tierra</option><option>Cableado estructurado</option><option>Telecomunicaciones</option><option>Otro</option></select></div><div><label>Responsable principal</label><input id="responsible" required></div><div><label>Prioridad</label><select id="priority"><option>Baja</option><option selected>Media</option><option>Alta</option><option>Crítica</option></select></div>
         <div><label>Etapa</label><select id="stage"></select></div><div><label>Estado</label><select id="status"><option>Pendiente</option><option>En proceso</option><option>Finalizado</option><option>Atrasado</option></select></div><div><label>Monto estimado S/</label><input id="amount" type="number" min="0" step="0.01"></div>
-        <div><label>Inicio</label><input id="start" type="date" required></div><div><label>Fin estimado</label><input id="due" type="date" required></div><div><label>Contacto</label><input id="contact"></div><div class="full"><label>Descripción / alcance</label><textarea id="notes" placeholder="Indica alcance, acuerdos, restricciones o detalles importantes..."></textarea></div><div class="full actions" style="justify-content:flex-end"><button type="button" class="btn light" onclick="go('projects')">Cancelar</button><button class="btn">Guardar proyecto</button></div>
+        <div><label>Inicio</label><input id="start" type="date" required></div><div><label>Fin estimado</label><input id="due" type="date" required></div><div><label>Contacto</label><input id="contact"></div><div class="wide admin-only"><label>Usuario cliente</label><input id="clientUser" placeholder="Se genera automáticamente al guardar"></div><div class="admin-only"><label>Contraseña cliente</label><input id="clientPass" placeholder="Se genera automáticamente al guardar"></div><div class="full admin-only"><button type="button" class="btn light" onclick="generateClientAccess()">🔐 Generar acceso cliente</button><p class="muted" style="margin-top:8px">Este acceso permite que el cliente vea solo sus proyectos y no pueda editar información.</p></div><div class="full"><label>Descripción / alcance</label><textarea id="notes" placeholder="Indica alcance, acuerdos, restricciones o detalles importantes..."></textarea></div><div class="full actions" style="justify-content:flex-end"><button type="button" class="btn light" onclick="go('projects')">Cancelar</button><button class="btn">Guardar proyecto</button></div>
       </form></div></div>
     </section>
 
     <section id="detail" class="screen">
-      <div class="topbar"><div><h2 id="detailTitle">Proyecto</h2><p id="detailSub">Gestión integral del proyecto seleccionado.</p></div><div class="actions"><button class="btn light" onclick="editSelected()">✏️ Editar</button><button class="btn danger" onclick="deleteSelected()">Eliminar</button><button class="btn light" onclick="go('projects')">Volver</button></div></div>
+      <div class="topbar"><div><h2 id="detailTitle">Proyecto</h2><p id="detailSub">Gestión integral del proyecto seleccionado.</p></div><div class="actions"><button class="btn light admin-only" onclick="editSelected()">✏️ Editar</button><button class="btn danger admin-only" onclick="deleteSelected()">Eliminar</button><button class="btn light" onclick="go('projects')">Volver</button></div></div>
       <div class="detail-meta" id="detailStats"></div><div class="panel"><div class="body"><div class="tabs"><button class="active" onclick="setTab('tasks',this)">✅ Actividades</button><button onclick="setTab('files',this)">📂 Documentos</button><button onclick="setTab('records',this)">🧾 Registros</button><button onclick="setTab('materials',this)">📦 Materiales</button><button onclick="setTab('after',this)">🗓️ Postventa</button></div><div id="tabContent"></div></div></div>
     </section>
 
@@ -242,28 +248,55 @@
 
 const AUTH_KEY='djd_session_usuario_v1';
 const USERS=[
-  {username:'claudia',email:'claudia@djd.com',password:'123456',name:'Claudia Vega',role:'Administradora'},
-  {username:'companero',email:'companero@djd.com',password:'123456',name:'Compañero DJD',role:'Colaborador'},
-  {username:'Dann.gmail',email:'Dann.gmail',password:'Ingernieria Empresarial',name:'Dann',role:'Colaborador'}
+  {username:'claudia',email:'claudia@djd.com',password:'123456',name:'Claudia Vega',role:'Administradora',type:'interno'},
+  {username:'companero',email:'companero@djd.com',password:'123456',name:'Compañero DJD',role:'Colaborador',type:'interno'},
+  {username:'Dann.gmail',email:'Dann.gmail',password:'Ingernieria Empresarial',name:'Dann',role:'Colaborador',type:'interno'}
 ];
 let currentUser=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');
 let appStarted=false;
+function isClientUser(){return currentUser?.type==='cliente'}
+function canEdit(){return !isClientUser()}
+function getVisibleData(){
+  if(!isClientUser())return data;
+  const ids=currentUser.projectIds||[];
+  const user=(currentUser.username||'').toLowerCase();
+  return data.filter(p=>ids.includes(p.id)||(p.clientUser||'').toLowerCase()===user);
+}
+function applyRoleUI(){
+  document.body.classList.toggle('client-mode',isClientUser());
+}
 function renderUser(){
   const chip=$('userChip');
   if(!chip||!currentUser)return;
-  chip.innerHTML=`<b>${currentUser.name}</b><span><span class="role">${currentUser.role}</span><br>Workspace: Proyectos DJD</span>`;
+  const roleLine=isClientUser()?'Cliente · Solo lectura':currentUser.role;
+  chip.innerHTML=`<b>${currentUser.name}</b><span><span class="role">${roleLine}</span><br>Workspace: Proyectos DJD</span>`;
+  applyRoleUI();
+}
+async function prepareLoginData(){
+  initCloud();
+  if(cloudClient)await cloudLoad(false);
+  data=data.map(norm);
 }
 async function login(e){
   e.preventDefault();
-  const u=$('loginUser').value.trim().toLowerCase();
+  const u=$('loginUser').value.trim();
+  const ul=u.toLowerCase();
   const p=$('loginPass').value;
-  const found=USERS.find(x=>(x.username.toLowerCase()===u||x.email.toLowerCase()===u)&&x.password===p);
-  if(!found){$('loginError').style.display='block';return;}
-  currentUser={username:found.username,email:found.email,name:found.name,role:found.role,workspace:'Proyectos DJD'};
+  $('loginError').style.display='none';
+  const found=USERS.find(x=>(x.username.toLowerCase()===ul||x.email.toLowerCase()===ul)&&x.password===p);
+  if(found){
+    currentUser={username:found.username,email:found.email,name:found.name,role:found.role,type:found.type||'interno',workspace:'Proyectos DJD'};
+  }else{
+    try{await prepareLoginData()}catch(err){console.error(err)}
+    const matches=data.filter(pr=>(pr.clientUser||'').toLowerCase()===ul && (pr.clientPass||'')===p);
+    if(!matches.length){$('loginError').style.display='block';return;}
+    currentUser={username:matches[0].clientUser,email:matches[0].contact||'',name:matches[0].client||'Cliente',role:'Cliente',type:'cliente',projectIds:matches.map(x=>x.id),workspace:'Proyectos DJD'};
+  }
   localStorage.setItem(AUTH_KEY,JSON.stringify(currentUser));
   document.body.classList.remove('locked');
   renderUser();
   await startApp();
+  if(isClientUser())go('projects');
   msg('Bienvenido/a, '+currentUser.name);
 }
 function logout(){
@@ -271,6 +304,7 @@ function logout(){
   localStorage.removeItem(AUTH_KEY);
   currentUser=null;
   document.body.classList.add('locked');
+  document.body.classList.remove('client-mode');
   selected=null;
   $('loginPass').value='';
   $('loginError').style.display='none';
@@ -284,7 +318,8 @@ async function startApp(){
 const KEY='djd_sistema_integral_10_proyectos_v1';
 const CLOUD_CFG='djd_supabase_config_v1';
 const CLOUD_ROW_ID='main';
-let cloudClient=null, cloudConfig=JSON.parse(localStorage.getItem(CLOUD_CFG)||'null'), cloudTimer=null, cloudBusy=false;
+const DEFAULT_CLOUD_CONFIG={url:'https://enbffueudjpekxigdoib.supabase.co',key:'sb_publishable_cxuVFnFS-Hv1PCU_NOet9g_ibWFbSke',table:'djd_app_state'};
+let cloudClient=null, cloudConfig=JSON.parse(localStorage.getItem(CLOUD_CFG)||'null')||DEFAULT_CLOUD_CONFIG, cloudTimer=null, cloudBusy=false;
 let cloudPollTimer=null, cloudRemoteStamp='', lastLocalChangeAt=0;
 const CLOUD_POLL_MS=12000;
 const STAGES=['Solicitud','Cotización','Aprobación','Planificación','Ejecución','Validación','Entrega','Postventa'];
@@ -2128,68 +2163,88 @@ function stopCloudPolling(){
 function copySQL(){let text=$('sqlBox').innerText;navigator.clipboard?.writeText(text);msg('SQL copiado')}
 function cls(s){return s==='Finalizado'||s==='Aprobado'||s==='Realizado'?'b-done':s==='En proceso'||s==='En revisión'?'b-proc':s==='Atrasado'||s==='Observado'?'b-bad':'b-pend'}
 function overdue(p){return p.status!=='Finalizado'&&p.due&&new Date(p.due)<new Date(today())}function progress(p){if(p.tasks?.length)return Math.round(p.tasks.filter(x=>x.status==='Finalizado').length/p.tasks.length*100);return p.status==='Finalizado'?100:Math.round((STAGES.indexOf(p.stage)+1)/STAGES.length*100)}
-function norm(p){return{id:p.id||uid(),code:p.code||'',client:p.client||'',clientType:p.clientType||'Propietario residencial',service:p.service||'',responsible:p.responsible||'',priority:p.priority||'Media',stage:p.stage||'Solicitud',status:p.status||'Pendiente',amount:p.amount||'',start:p.start||today(),due:p.due||today(),contact:p.contact||'',notes:p.notes||'',tasks:p.tasks||[],files:p.files||[],records:p.records||[],materials:p.materials||[],after:p.after||[]}}
+function norm(p){return{id:p.id||uid(),code:p.code||'',client:p.client||'',clientType:p.clientType||'Propietario residencial',service:p.service||'',responsible:p.responsible||'',priority:p.priority||'Media',stage:p.stage||'Solicitud',status:p.status||'Pendiente',amount:p.amount||'',start:p.start||today(),due:p.due||today(),contact:p.contact||'',notes:p.notes||'',clientUser:p.clientUser||'',clientPass:p.clientPass||'',tasks:p.tasks||[],files:p.files||[],records:p.records||[],materials:p.materials||[],after:p.after||[]}}
+
+function cleanKey(v){return (v||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,28)}
+function makeClientUser(code,client){return 'cliente_'+(cleanKey(code)||cleanKey(client)||uid().slice(0,5))}
+function makeClientPass(){return 'DJD-'+Math.random().toString(36).slice(2,8).toUpperCase()}
+function generateClientAccess(){
+  const code=$('code')?.value||'';
+  const client=$('client')?.value||'';
+  if($('clientUser')&&!$('clientUser').value)$('clientUser').value=makeClientUser(code,client);
+  if($('clientPass')&&!$('clientPass').value)$('clientPass').value=makeClientPass();
+  msg('Acceso cliente generado');
+}
+function copyClientAccess(id){
+  const pr=data.find(x=>x.id===id); if(!pr)return;
+  const text=`Acceso al portal de seguimiento DJD\nProyecto: ${pr.code} - ${pr.client}\nUsuario: ${pr.clientUser||'-'}\nContraseña: ${pr.clientPass||'-'}`;
+  navigator.clipboard?.writeText(text);
+  alert(text+'\n\nCredenciales copiadas al portapapeles.');
+}
+function requireEdit(){if(isClientUser()){alert('Tu usuario es de cliente: solo puedes visualizar el avance del proyecto.');return false}return true}
+
 data=data.map(norm);save();
-function go(id,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');render()}
+function go(id,btn){if(isClientUser()&&['projectForm','cloud'].includes(id))id='projects';document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');render()}
 async function init(){
   if($('stage')){$('stage').innerHTML='';STAGES.forEach(s=>{$('stage').innerHTML+=`<option>${s}</option>`})}
   if($('fStage')){$('fStage').innerHTML='<option value="">Todas las etapas</option>';STAGES.forEach(s=>{$('fStage').innerHTML+=`<option>${s}</option>`})}
   if($('fStatus')){$('fStatus').innerHTML='<option value="">Todos los estados</option><option>Pendiente</option><option>En proceso</option><option>Finalizado</option><option>Atrasado</option>'}
   initCloud();if(cloudClient)await cloudLoad(false);renderUser();render()
 }
-function render(){stats();recent();filters();projects();docs();if(selected)detail()}
-function stats(){$('stProjects').textContent=data.length;$('stActive').textContent=data.filter(p=>p.status!=='Finalizado').length;$('stLate').textContent=data.filter(overdue).length;$('stDocs').textContent=data.reduce((a,p)=>a+p.files.length,0);$('stAfter').textContent=data.reduce((a,p)=>a+p.after.filter(x=>x.status!=='Realizado').length,0)}
-function recent(){let b=$('recentProjects');b.innerHTML='';data.slice(-4).reverse().forEach(p=>b.innerHTML+=card(p));if(!data.length)b.innerHTML='<div class="empty">Aún no hay proyectos. Registra uno nuevo o restaura los 10 proyectos de ejemplo.</div>'}
-function card(p){let st=overdue(p)?'Atrasado':p.status;return`<div class="card"><h4>${p.code} · ${p.client}</h4><p>${p.service}<br>Responsable: ${p.responsible||'-'}</p><p><span class="badge ${cls(st)}">${st}</span> <span class="badge b-stage">${p.stage}</span></p><br><div class="bar"><div style="width:${progress(p)}%"></div></div><br><button class="btn small" onclick="openDetail('${p.id}')">Gestionar</button></div>`}
+function render(){applyRoleUI();stats();recent();filters();projects();docs();if(selected)detail()}
+function stats(){let v=getVisibleData();$('stProjects').textContent=v.length;$('stActive').textContent=v.filter(p=>p.status!=='Finalizado').length;$('stLate').textContent=v.filter(overdue).length;$('stDocs').textContent=v.reduce((a,p)=>a+p.files.length,0);$('stAfter').textContent=v.reduce((a,p)=>a+p.after.filter(x=>x.status!=='Realizado').length,0)}
+function recent(){let b=$('recentProjects');let v=getVisibleData();b.innerHTML='';v.slice(-4).reverse().forEach(p=>b.innerHTML+=card(p));if(!v.length)b.innerHTML='<div class="empty">No tienes proyectos asignados para visualizar.</div>'}
+function card(p){let st=overdue(p)?'Atrasado':p.status;let label=isClientUser()?'Ver avance':'Gestionar';return`<div class="card"><h4>${p.code} · ${p.client}</h4><p>${p.service}<br>Responsable: ${p.responsible||'-'}</p><p><span class="badge ${cls(st)}">${st}</span> <span class="badge b-stage">${p.stage}</span></p><br><div class="bar"><div style="width:${progress(p)}%"></div></div><br><button class="btn small" onclick="openDetail('${p.id}')">${label}</button></div>`}
 function filters(){
   const resp=$('fResp'); if(!resp) return;
   const current=resp.value;
-  let r=[...new Set(data.map(p=>p.responsible).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  let visible=getVisibleData();
+  let r=[...new Set(visible.map(p=>p.responsible).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   resp.innerHTML='<option value="">Todos los responsables</option>'+r.map(x=>`<option value="${x}">${x}</option>`).join('');
   if(r.includes(current)) resp.value=current;
 }
 function filt(){
   let q=$('q')?.value?.toLowerCase().trim()||'',s=$('fStage')?.value||'',e=$('fStatus')?.value||'',r=$('fResp')?.value||'';
-  return data.filter(p=>{
+  return getVisibleData().filter(p=>{
     const realStatus=overdue(p)?'Atrasado':p.status;
     const text=[p.code,p.client,p.service,p.responsible,p.stage,p.status].join(' ').toLowerCase();
     return (!q||text.includes(q))&&(!s||p.stage===s)&&(!e||realStatus===e)&&(!r||p.responsible===r);
   })
 }
-function projects(){let body=$('projectRows');if(!body)return;let rows=filt();body.innerHTML=rows.map(p=>{let st=overdue(p)?'Atrasado':p.status;return`<tr><td><b>${p.code}</b><br><span class="muted">${p.client}<br>${p.service}</span></td><td>${p.responsible||'-'}</td><td><span class="badge b-stage">${p.stage}</span></td><td><span class="badge ${cls(st)}">${st}</span></td><td><span class="muted">Inicio: ${fmt(p.start)}<br>Fin: ${fmt(p.due)}<br>${days(p.start,p.due)} día(s)</span></td><td><div class="bar"><div style="width:${progress(p)}%"></div></div><span class="muted">${progress(p)}%</span></td><td><button class="btn small" onclick="openDetail('${p.id}')">Gestionar</button> <button class="btn small light" onclick="editProject('${p.id}')">Editar</button></td></tr>`}).join('')||'<tr><td colspan="7" class="empty">No hay proyectos registrados.</td></tr>'}
+function projects(){let body=$('projectRows');if(!body)return;let rows=filt();body.innerHTML=rows.map(p=>{let st=overdue(p)?'Atrasado':p.status;let actions=isClientUser()?`<button class="btn small" onclick="openDetail('${p.id}')">Ver avance</button>`:`<button class="btn small" onclick="openDetail('${p.id}')">Gestionar</button> <button class="btn small light" onclick="editProject('${p.id}')">Editar</button> <button class="btn small light" onclick="copyClientAccess('${p.id}')">Acceso cliente</button>`;return`<tr><td><b>${p.code}</b><br><span class="muted">${p.client}<br>${p.service}</span></td><td>${p.responsible||'-'}</td><td><span class="badge b-stage">${p.stage}</span></td><td><span class="badge ${cls(st)}">${st}</span></td><td><span class="muted">Inicio: ${fmt(p.start)}<br>Fin: ${fmt(p.due)}<br>${days(p.start,p.due)} día(s)</span></td><td><div class="bar"><div style="width:${progress(p)}%"></div></div><span class="muted">${progress(p)}%</span></td><td>${actions}</td></tr>`}).join('')||'<tr><td colspan="7" class="empty">No hay proyectos disponibles para este usuario.</td></tr>'}
 function renderProjects(){projects()}
 function clearFilters(){if($('q'))$('q').value='';if($('fStage'))$('fStage').value='';if($('fStatus'))$('fStatus').value='';if($('fResp'))$('fResp').value='';projects()}
-function openNewProject(){selected=null;$('formTitle').textContent='Nuevo proyecto';['pid','client','responsible','amount','contact','notes'].forEach(id=>$(id).value='');$('code').value='PRY-'+String(data.length+1).padStart(3,'0');$('start').value=today();$('due').value=today();$('stage').value='Solicitud';$('status').value='Pendiente';go('projectForm')}
-function saveProject(e){e.preventDefault();let id=$('pid').value||uid(),old=data.find(p=>p.id===id)||{};let p=norm({...old,id,code:$('code').value,client:$('client').value,clientType:$('clientType').value,service:$('service').value,responsible:$('responsible').value,priority:$('priority').value,stage:$('stage').value,status:$('status').value,amount:$('amount').value,start:$('start').value,due:$('due').value,contact:$('contact').value,notes:$('notes').value});if(new Date(p.due)<new Date(p.start))return alert('La fecha fin no puede ser menor que la fecha de inicio.');let i=data.findIndex(x=>x.id===id);i>=0?data[i]=p:data.push(p);selected=p.id;save();msg('Proyecto guardado');go('detail')}
-function editProject(id){let p=data.find(x=>x.id===id);if(!p)return;selected=id;$('formTitle').textContent='Editar proyecto';['pid','code','client','clientType','service','responsible','priority','stage','status','amount','start','due','contact','notes'].forEach(k=>$(k).value=k==='pid'?p.id:p[k]||'');go('projectForm')}
-function openDetail(id){selected=id;tab='tasks';go('detail')}function editSelected(){if(selected)editProject(selected)}function deleteSelected(){let p=data.find(x=>x.id===selected);if(!p||!confirm('¿Eliminar este proyecto?'))return;data=data.filter(x=>x.id!==selected);selected=null;save();msg('Proyecto eliminado');go('projects')}
-function detail(){let p=data.find(x=>x.id===selected);if(!p)return;$('detailTitle').textContent=`${p.code} · ${p.client}`;$('detailSub').textContent=`${p.service} | Responsable: ${p.responsible||'-'}`;let st=overdue(p)?'Atrasado':p.status;$('detailStats').innerHTML=`<div class="mini"><span>Estado</span><b><span class="badge ${cls(st)}">${st}</span></b></div><div class="mini"><span>Etapa</span><b>${p.stage}</b></div><div class="mini"><span>Avance</span><b>${progress(p)}%</b></div><div class="mini"><span>Documentos</span><b>${p.files.length}</b></div>`;document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));document.querySelector(`.tabs button[onclick*="${tab}"]`)?.classList.add('active');$('tabContent').innerHTML=tabHTML(p)}
+function openNewProject(){if(!requireEdit())return;selected=null;$('formTitle').textContent='Nuevo proyecto';['pid','client','responsible','amount','contact','notes','clientUser','clientPass'].forEach(id=>{if($(id))$(id).value=''});$('code').value='PRY-'+String(data.length+1).padStart(3,'0');$('start').value=today();$('due').value=today();$('stage').value='Solicitud';$('status').value='Pendiente';go('projectForm')}
+function saveProject(e){e.preventDefault();if(!requireEdit())return;let id=$('pid').value||uid(),old=data.find(p=>p.id===id)||{};let code=$('code').value,client=$('client').value;let clientUser=($('clientUser')?.value||'').trim()||old.clientUser||makeClientUser(code,client);let clientPass=($('clientPass')?.value||'').trim()||old.clientPass||makeClientPass();let p=norm({...old,id,code,client,clientType:$('clientType').value,service:$('service').value,responsible:$('responsible').value,priority:$('priority').value,stage:$('stage').value,status:$('status').value,amount:$('amount').value,start:$('start').value,due:$('due').value,contact:$('contact').value,notes:$('notes').value,clientUser,clientPass});if(new Date(p.due)<new Date(p.start))return alert('La fecha fin no puede ser menor que la fecha de inicio.');let i=data.findIndex(x=>x.id===id);i>=0?data[i]=p:data.push(p);selected=p.id;save();msg('Proyecto guardado');setTimeout(()=>copyClientAccess(p.id),250);go('detail')}
+function editProject(id){if(!requireEdit())return;let p=data.find(x=>x.id===id);if(!p)return;selected=id;$('formTitle').textContent='Editar proyecto';['pid','code','client','clientType','service','responsible','priority','stage','status','amount','start','due','contact','notes','clientUser','clientPass'].forEach(k=>{if($(k))$(k).value=k==='pid'?p.id:p[k]||''});go('projectForm')}
+function openDetail(id){let allowed=getVisibleData().some(x=>x.id===id);if(!allowed){alert('No tienes acceso a este proyecto.');return;}selected=id;tab='tasks';go('detail')}function editSelected(){if(selected)editProject(selected)}function deleteSelected(){if(!requireEdit())return;let p=data.find(x=>x.id===selected);if(!p||!confirm('¿Eliminar este proyecto?'))return;data=data.filter(x=>x.id!==selected);selected=null;save();msg('Proyecto eliminado');go('projects')}
+function detail(){let p=data.find(x=>x.id===selected);if(!p||!getVisibleData().some(x=>x.id===selected)){selected=null;go('projects');return;}$('detailTitle').textContent=`${p.code} · ${p.client}`;$('detailSub').textContent=`${p.service} | Responsable: ${p.responsible||'-'}`;let st=overdue(p)?'Atrasado':p.status;let access=canEdit()?`<div class="mini"><span>Acceso cliente</span><b>${p.clientUser||'-'}</b></div>`:'';$('detailStats').innerHTML=`<div class="mini"><span>Estado</span><b><span class="badge ${cls(st)}">${st}</span></b></div><div class="mini"><span>Etapa</span><b>${p.stage}</b></div><div class="mini"><span>Avance</span><b>${progress(p)}%</b></div><div class="mini"><span>Documentos</span><b>${p.files.length}</b></div>${access}`;document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));document.querySelector(`.tabs button[onclick*="${tab}"]`)?.classList.add('active');$('tabContent').innerHTML=(isClientUser()?'<div class="client-view-note"><b>Vista de cliente:</b> puedes revisar el avance, documentos, registros, materiales y postventa. No puedes editar ni eliminar información.</div>':'')+tabHTML(p)}
 function setTab(t,btn){tab=t;document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');detail()}function tabHTML(p){return tab==='tasks'?tasksHTML(p):tab==='files'?filesHTML(p):tab==='records'?recordsHTML(p):tab==='materials'?materialsHTML(p):afterHTML(p)}
-function tasksHTML(p){return`<div class="split"><div class="box"><h4>Agregar actividad</h4><form onsubmit="addTask(event)"><label>Actividad</label><input id="tName" required><label>Responsable</label><input id="tOwner" required><label>Fecha fin</label><input id="tDue" type="date" required><label>Estado</label><select id="tStatus"><option>Pendiente</option><option>En proceso</option><option>Finalizado</option></select><br><br><button class="btn">Agregar</button></form></div><div><div class="list">${p.tasks.map(x=>item('tasks',x,`👤 ${x.owner} · vence ${fmt(x.due)}`)).join('')||'<div class="empty">Sin actividades.</div>'}</div></div></div>`}
-function filesHTML(p){let folders=FOLDERS.map(f=>`<div class="folder"><b>📁 ${f[1]}</b><span>${p.files.filter(x=>x.folder===f[0]).length}</span></div>`).join('');return`<div class="folder-grid">${folders}</div><div class="split"><div class="box"><h4>Subir documento</h4><form onsubmit="addFile(event)"><label>Carpeta</label><select id="fileFolder">${FOLDERS.map(f=>`<option value="${f[0]}">${f[1]}</option>`).join('')}</select><label>Nombre / descripción</label><input id="fileName" required><label>Archivo</label><input id="fileInput" type="file" required><label>Estado</label><select id="fileStatus"><option>Recibido</option><option>En revisión</option><option>Aprobado</option><option>Observado</option></select><br><br><button class="btn">Subir</button></form></div><div><div class="list">${p.files.map(x=>fileItem(x)).join('')||'<div class="empty">Sin documentos subidos.</div>'}</div></div></div>`}
-function recordsHTML(p){return`<div class="split"><div class="box"><h4>Nuevo registro</h4><form onsubmit="addRecord(event)"><label>Tipo</label><select id="rType"><option>Solicitud</option><option>WhatsApp</option><option>Llamada</option><option>Correo</option><option>Reunión</option><option>Visita técnica</option><option>Acuerdo</option><option>Observación</option></select><label>Detalle</label><textarea id="rText" required></textarea><button class="btn">Registrar</button></form></div><div><div class="list">${p.records.map(x=>item('records',x,fmt(x.date))).join('')||'<div class="empty">Sin registros.</div>'}</div></div></div>`}
-function materialsHTML(p){return`<div class="split"><div class="box"><h4>Agregar material</h4><form onsubmit="addMaterial(event)"><label>Material / herramienta</label><input id="mName" required><label>Cantidad</label><input id="mQty" type="number" min="0" step="0.01" required><label>Costo unitario S/</label><input id="mCost" type="number" min="0" step="0.01"><label>Responsable</label><input id="mOwner"><button class="btn">Agregar</button></form></div><div><div class="list">${p.materials.map(x=>item('materials',x,`${x.qty} und. · ${money((x.qty||0)*(x.cost||0))} · ${x.owner||'Sin responsable'}`)).join('')||'<div class="empty">Sin materiales.</div>'}</div></div></div>`}
-function afterHTML(p){return`<div class="split"><div class="box"><h4>Agregar postventa</h4><form onsubmit="addAfter(event)"><label>Tipo</label><select id="aType"><option>Recordatorio de mantenimiento</option><option>Garantía</option><option>Seguimiento de satisfacción</option><option>Visita preventiva</option><option>Oportunidad futura</option></select><label>Fecha</label><input id="aDate" type="date" required><label>Detalle</label><textarea id="aText"></textarea><button class="btn">Agregar</button></form></div><div><div class="list">${p.after.map(x=>item('after',x,fmt(x.date))).join('')||'<div class="empty">Sin postventa.</div>'}</div></div></div>`}
-function item(col,x,meta){return`<div class="item"><div class="item-top"><strong>${x.name||x.type}</strong><span class="badge ${cls(x.status)}">${x.status}</span></div><p>${x.text||x.notes||''}</p><div class="muted">${meta}</div><div class="item-actions"><button class="btn small ok" onclick="mark('${col}','${x.id}')">Finalizar</button><button class="btn small danger" onclick="del('${col}','${x.id}')">Eliminar</button></div></div>`}
-function fileItem(x){let folder=FOLDERS.find(f=>f[0]===x.folder)?.[1]||x.folder;return`<div class="item"><div class="item-top"><strong>📄 ${x.name}</strong><span class="badge ${cls(x.status)}">${x.status}</span></div><p>${folder} · ${x.fileName} · ${fmt(x.date)}</p><div class="item-actions"><a class="btn small light" href="${x.data}" download="${x.fileName}">Descargar</a><button class="btn small ok" onclick="setFileStatus('${x.id}','Aprobado')">Aprobar</button><button class="btn small danger" onclick="del('files','${x.id}')">Eliminar</button></div></div>`}
+function tasksHTML(p){let list=`<div class="list">${p.tasks.map(x=>item('tasks',x,`👤 ${x.owner} · vence ${fmt(x.due)}`)).join('')||'<div class="empty">Sin actividades.</div>'}</div>`;if(isClientUser())return list;return`<div class="split"><div class="box"><h4>Agregar actividad</h4><form onsubmit="addTask(event)"><label>Actividad</label><input id="tName" required><label>Responsable</label><input id="tOwner" required><label>Fecha fin</label><input id="tDue" type="date" required><label>Estado</label><select id="tStatus"><option>Pendiente</option><option>En proceso</option><option>Finalizado</option></select><br><br><button class="btn">Agregar</button></form></div><div>${list}</div></div>`}
+function filesHTML(p){let folders=FOLDERS.map(f=>`<div class="folder"><b>📁 ${f[1]}</b><span>${p.files.filter(x=>x.folder===f[0]).length}</span></div>`).join('');let list=`<div class="list">${p.files.map(x=>fileItem(x)).join('')||'<div class="empty">Sin documentos subidos.</div>'}</div>`;if(isClientUser())return`<div class="folder-grid">${folders}</div>${list}`;return`<div class="folder-grid">${folders}</div><div class="split"><div class="box"><h4>Subir documento</h4><form onsubmit="addFile(event)"><label>Carpeta</label><select id="fileFolder">${FOLDERS.map(f=>`<option value="${f[0]}">${f[1]}</option>`).join('')}</select><label>Nombre / descripción</label><input id="fileName" required><label>Archivo</label><input id="fileInput" type="file" required><label>Estado</label><select id="fileStatus"><option>Recibido</option><option>En revisión</option><option>Aprobado</option><option>Observado</option></select><br><br><button class="btn">Subir</button></form></div><div>${list}</div></div>`}
+function recordsHTML(p){let list=`<div class="list">${p.records.map(x=>item('records',x,fmt(x.date))).join('')||'<div class="empty">Sin registros.</div>'}</div>`;if(isClientUser())return list;return`<div class="split"><div class="box"><h4>Nuevo registro</h4><form onsubmit="addRecord(event)"><label>Tipo</label><select id="rType"><option>Solicitud</option><option>WhatsApp</option><option>Llamada</option><option>Correo</option><option>Reunión</option><option>Visita técnica</option><option>Acuerdo</option><option>Observación</option></select><label>Detalle</label><textarea id="rText" required></textarea><button class="btn">Registrar</button></form></div><div>${list}</div></div>`}
+function materialsHTML(p){let list=`<div class="list">${p.materials.map(x=>item('materials',x,`${x.qty} und. · ${money((x.qty||0)*(x.cost||0))} · ${x.owner||'Sin responsable'}`)).join('')||'<div class="empty">Sin materiales.</div>'}</div>`;if(isClientUser())return list;return`<div class="split"><div class="box"><h4>Agregar material</h4><form onsubmit="addMaterial(event)"><label>Material / herramienta</label><input id="mName" required><label>Cantidad</label><input id="mQty" type="number" min="0" step="0.01" required><label>Costo unitario S/</label><input id="mCost" type="number" min="0" step="0.01"><label>Responsable</label><input id="mOwner"><button class="btn">Agregar</button></form></div><div>${list}</div></div>`}
+function afterHTML(p){let list=`<div class="list">${p.after.map(x=>item('after',x,fmt(x.date))).join('')||'<div class="empty">Sin postventa.</div>'}</div>`;if(isClientUser())return list;return`<div class="split"><div class="box"><h4>Agregar postventa</h4><form onsubmit="addAfter(event)"><label>Tipo</label><select id="aType"><option>Recordatorio de mantenimiento</option><option>Garantía</option><option>Seguimiento de satisfacción</option><option>Visita preventiva</option><option>Oportunidad futura</option></select><label>Fecha</label><input id="aDate" type="date" required><label>Detalle</label><textarea id="aText"></textarea><button class="btn">Agregar</button></form></div><div>${list}</div></div>`}
+function item(col,x,meta){let actions=isClientUser()?'':`<div class="item-actions"><button class="btn small ok" onclick="mark('${col}','${x.id}')">Finalizar</button><button class="btn small danger" onclick="del('${col}','${x.id}')">Eliminar</button></div>`;return`<div class="item"><div class="item-top"><strong>${x.name||x.type}</strong><span class="badge ${cls(x.status)}">${x.status}</span></div><p>${x.text||x.notes||''}</p><div class="muted">${meta}</div>${actions}</div>`}
+function fileItem(x){let folder=FOLDERS.find(f=>f[0]===x.folder)?.[1]||x.folder;let actions=isClientUser()?`<a class="btn small light" href="${x.data}" download="${x.fileName}">Descargar</a>`:`<a class="btn small light" href="${x.data}" download="${x.fileName}">Descargar</a><button class="btn small ok" onclick="setFileStatus('${x.id}','Aprobado')">Aprobar</button><button class="btn small danger" onclick="del('files','${x.id}')">Eliminar</button>`;return`<div class="item"><div class="item-top"><strong>📄 ${x.name}</strong><span class="badge ${cls(x.status)}">${x.status}</span></div><p>${folder} · ${x.fileName} · ${fmt(x.date)}</p><div class="item-actions">${actions}</div></div>`}
 function p(){return data.find(x=>x.id===selected)}
-function addTask(e){e.preventDefault();p().tasks.push({id:uid(),name:$('tName').value,owner:$('tOwner').value,due:$('tDue').value,status:$('tStatus').value});save();msg('Actividad agregada');detail()}
-function addFile(e){e.preventDefault();let f=$('fileInput').files[0],r=new FileReader();r.onload=()=>{p().files.push({id:uid(),folder:$('fileFolder').value,name:$('fileName').value,fileName:f.name,type:f.type,size:f.size,data:r.result,status:$('fileStatus').value,date:today()});save();msg('Documento subido');detail();docs()};r.readAsDataURL(f)}
-function addRecord(e){e.preventDefault();p().records.push({id:uid(),type:$('rType').value,name:$('rType').value,text:$('rText').value,date:today(),status:'Registrado'});save();msg('Registro agregado');detail()}
-function addMaterial(e){e.preventDefault();p().materials.push({id:uid(),name:$('mName').value,qty:Number($('mQty').value),cost:Number($('mCost').value||0),owner:$('mOwner').value,status:'Asignado'});save();msg('Material agregado');detail()}
-function addAfter(e){e.preventDefault();p().after.push({id:uid(),type:$('aType').value,name:$('aType').value,text:$('aText').value,date:$('aDate').value,status:'Pendiente'});save();msg('Postventa agregada');detail()}
-function mark(col,id){let x=p()[col].find(i=>i.id===id);x.status=col==='after'?'Realizado':'Finalizado';save();detail()}function del(col,id){if(!confirm('¿Eliminar registro?'))return;p()[col]=p()[col].filter(x=>x.id!==id);save();detail();render()}function setFileStatus(id,s){let x=p().files.find(i=>i.id===id);x.status=s;save();detail();docs()}
-function docs(){let box=$('allDocs');if(!box)return;let d=data.flatMap(p=>p.files.map(f=>({...f,project:p.code+' · '+p.client})));box.innerHTML=d.map(f=>`<div class="item"><div class="item-top"><strong>${f.project}</strong><span class="badge ${cls(f.status)}">${f.status}</span></div><p>${f.name} · ${f.fileName}</p><a class="btn small light" href="${f.data}" download="${f.fileName}">Descargar</a></div>`).join('')||'<div class="empty">Aún no hay documentos subidos.</div>'}
-function exportData(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='respaldo_sistema_djd.json';a.click();msg('Información exportada')}
-function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data=JSON.parse(r.result).map(norm);save();render();msg('Información importada')}catch{alert('Archivo inválido')}};r.readAsText(f);e.target.value=''}
-function loadDemo(){if(data.length&&!confirm('Se reemplazará la información actual por los 10 proyectos de ejemplo. ¿Continuar?'))return;data=DEMO_DATA.map(norm);save();render();msg('10 proyectos cargados')}
+function addTask(e){e.preventDefault();if(!requireEdit())return;p().tasks.push({id:uid(),name:$('tName').value,owner:$('tOwner').value,due:$('tDue').value,status:$('tStatus').value});save();msg('Actividad agregada');detail()}
+function addFile(e){e.preventDefault();if(!requireEdit())return;let f=$('fileInput').files[0],r=new FileReader();r.onload=()=>{p().files.push({id:uid(),folder:$('fileFolder').value,name:$('fileName').value,fileName:f.name,type:f.type,size:f.size,data:r.result,status:$('fileStatus').value,date:today()});save();msg('Documento subido');detail();docs()};r.readAsDataURL(f)}
+function addRecord(e){e.preventDefault();if(!requireEdit())return;p().records.push({id:uid(),type:$('rType').value,name:$('rType').value,text:$('rText').value,date:today(),status:'Registrado'});save();msg('Registro agregado');detail()}
+function addMaterial(e){e.preventDefault();if(!requireEdit())return;p().materials.push({id:uid(),name:$('mName').value,qty:Number($('mQty').value),cost:Number($('mCost').value||0),owner:$('mOwner').value,status:'Asignado'});save();msg('Material agregado');detail()}
+function addAfter(e){e.preventDefault();if(!requireEdit())return;p().after.push({id:uid(),type:$('aType').value,name:$('aType').value,text:$('aText').value,date:$('aDate').value,status:'Pendiente'});save();msg('Postventa agregada');detail()}
+function mark(col,id){if(!requireEdit())return;let x=p()[col].find(i=>i.id===id);x.status=col==='after'?'Realizado':'Finalizado';save();detail()}function del(col,id){if(!requireEdit())return;if(!confirm('¿Eliminar registro?'))return;p()[col]=p()[col].filter(x=>x.id!==id);save();detail();render()}function setFileStatus(id,s){if(!requireEdit())return;let x=p().files.find(i=>i.id===id);x.status=s;save();detail();docs()}
+function docs(){let box=$('allDocs');if(!box)return;let d=getVisibleData().flatMap(p=>p.files.map(f=>({...f,project:p.code+' · '+p.client})));box.innerHTML=d.map(f=>`<div class="item"><div class="item-top"><strong>${f.project}</strong><span class="badge ${cls(f.status)}">${f.status}</span></div><p>${f.name} · ${f.fileName}</p><a class="btn small light" href="${f.data}" download="${f.fileName}">Descargar</a></div>`).join('')||'<div class="empty">Aún no hay documentos subidos.</div>'}
+function exportData(){if(!requireEdit())return;let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='respaldo_sistema_djd.json';a.click();msg('Información exportada')}
+function importData(e){if(!requireEdit())return;let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{data=JSON.parse(r.result).map(norm);save();render();msg('Información importada')}catch{alert('Archivo inválido')}};r.readAsText(f);e.target.value=''}
+function loadDemo(){if(!requireEdit())return;if(data.length&&!confirm('Se reemplazará la información actual por los 10 proyectos de ejemplo. ¿Continuar?'))return;data=DEMO_DATA.map(norm);save();render();msg('10 proyectos cargados')}
 if(currentUser){document.body.classList.remove('locked');startApp()}
 </script>
 
 <script>
   // Control de versión para despliegues en Netlify/GitHub.
   // IMPORTANTE: mantener este valor igual al de version.json en cada actualización.
-  const APP_VERSION = "1.0.6";
+  const APP_VERSION = "1.0.8";
   const UPDATE_SEEN_KEY = "djd_update_seen_version";
 
   function closeUpdateBanner(remoteVersion){
