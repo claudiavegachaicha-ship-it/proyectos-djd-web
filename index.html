@@ -200,7 +200,7 @@
       <div class="topbar">
         <div>
           <h2>Conexión a base de datos en la nube</h2>
-          <p>Conecta este sistema a Supabase. Después de guardar la conexión una sola vez, cada cambio se guardará automáticamente en la nube y los usuarios podrán recibir la información actualizada.</p>
+          <p>Conecta este sistema a Supabase. Los datos ya están precargados; solo debes guardar la conexión una vez y luego cada cambio se sincronizará automáticamente.</p>
         </div>
         <span id="cloudBadge" class="cloud-status">☁️ Sin configurar</span>
       </div>
@@ -209,13 +209,13 @@
         <div class="panel-head">
           <div>
             <h3>1. Configuración de Supabase</h3>
-            <p>Pega el API URL o Project URL y la publishable key. Luego presiona Guardar conexión una sola vez. Después, el sistema sincroniza automáticamente.</p>
+            <p>Los datos de Supabase ya están precargados. Solo presiona Guardar conexión una vez para activar el autoguardado.</p>
           </div>
         </div>
         <div class="body">
           <div class="form">
-            <div class="wide"><label>Supabase Project URL / API URL</label><input id="cloudUrl" placeholder="https://xxxx.supabase.co"></div>
-            <div class="wide"><label>Supabase publishable key</label><input id="cloudKey" placeholder="sb_publishable_..."></div>
+            <div class="wide"><label>Supabase Project URL / API URL</label><input id="cloudUrl" placeholder="https://xxxx.supabase.co" value="https://enbffueudjpekxigdoib.supabase.co"></div>
+            <div class="wide"><label>Supabase publishable key</label><input id="cloudKey" placeholder="sb_publishable_..." value="sb_publishable_cxuVFnFS-Hv1PCU_NOet9g_ibWFbSke"></div>
             <div><label>Tabla</label><input id="cloudTable" value="djd_app_state"></div>
             <div class="full actions" style="justify-content:flex-end">
               <button class="btn light" type="button" onclick="clearCloudConfig()">Limpiar conexión</button>
@@ -2086,7 +2086,7 @@ function save(){
 }
 function msg(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1700)}
 function updateCloudBadge(text,type=''){let b=$('cloudBadge');if(!b)return;b.textContent=text;b.className='cloud-status '+type}
-function fillCloudForm(){if(!$('cloudUrl'))return;$('cloudUrl').value=cloudConfig?.url||'';$('cloudKey').value=cloudConfig?.key||'';$('cloudTable').value=cloudConfig?.table||'djd_app_state'}
+function fillCloudForm(){if(!$('cloudUrl'))return;$('cloudUrl').value=cloudConfig?.url||$('cloudUrl').value||'https://enbffueudjpekxigdoib.supabase.co';$('cloudKey').value=cloudConfig?.key||$('cloudKey').value||'sb_publishable_cxuVFnFS-Hv1PCU_NOet9g_ibWFbSke';$('cloudTable').value=cloudConfig?.table||$('cloudTable').value||'djd_app_state'}
 function normalizeSupabaseUrl(url){
   url=(url||'').trim().replace(/\/+$/,'');
   url=url.replace(/\/rest\/v1$/,'');

@@ -1,30 +1,19 @@
 # Proyectos DJD - Sistema de Gestión Integral
 
-Archivos para publicar en Netlify con actualización automática de versión y sincronización automática en Supabase.
+Versión con autoguardado en nube y campos de Supabase precargados.
 
 ## Archivos
 
 - `index.html`: sistema principal.
-- `config.js`: configuración predeterminada de Supabase.
-- `version.json`: versión pública usada para avisar a los usuarios que hay una actualización.
-- `_headers`: configuración para evitar caché en Netlify.
+- `version.json`: control de versión para avisos de actualización.
+- `_headers`: reglas de caché para Netlify.
+- `README.md`: esta guía.
 
-## Configuración de Supabase predeterminada
+## Uso
 
-Edita `config.js` y completa:
+1. Subir estos archivos a GitHub reemplazando los anteriores.
+2. Hacer `Commit changes`.
+3. Netlify publicará automáticamente el cambio.
+4. En la web, entrar al módulo **Nube** y presionar **Guardar conexión** una sola vez.
 
-```js
-window.DJD_SUPABASE_CONFIG = {
-  url: "https://xxxxxxxx.supabase.co",
-  key: "sb_publishable_xxxxxxxxxxxxxxxxx",
-  table: "djd_app_state"
-};
-```
-
-Usa únicamente la **publishable key**. No pegues la **secret key**.
-
-Con `config.js` configurado, los usuarios ya no necesitan entrar al módulo Nube ni presionar Guardar conexión. El sistema cargará y guardará automáticamente en Supabase.
-
-## Actualización
-
-Cada vez que cambies el sistema, actualiza también `version.json` y el valor `APP_VERSION` dentro de `index.html`.
+Los campos de URL y publishable key ya vienen precargados.
