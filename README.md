@@ -23,3 +23,7 @@ Los campos de URL y publishable key ya vienen precargados.
 - Corrige aviso de nueva versión para que no sea persistente.
 - Agrega usuario Dann.gmail.
 - Mejora filtros de proyectos por etapa, estado, responsable y búsqueda.
+
+
+## Actualización 1.0.7
+- En el módulo Nube se retiraron las secciones de SQL y explicación, dejando solo la configuración principal.
