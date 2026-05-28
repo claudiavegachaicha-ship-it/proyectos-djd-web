@@ -309,7 +309,8 @@ grant select, insert, update, delete on public.djd_app_state to anon;</pre>
 const AUTH_KEY='djd_session_usuario_v1';
 const USERS=[
   {username:'claudia',email:'claudia@djd.com',password:'123456',name:'Claudia Vega',role:'Administradora'},
-  {username:'companero',email:'companero@djd.com',password:'123456',name:'Compañero DJD',role:'Colaborador'}
+  {username:'companero',email:'companero@djd.com',password:'123456',name:'Compañero DJD',role:'Colaborador'},
+  {username:'Dann.gmail',email:'Dann.gmail',password:'Ingernieria Empresarial',name:'Dann',role:'Colaborador'}
 ];
 let currentUser=JSON.parse(localStorage.getItem(AUTH_KEY)||'null');
 let appStarted=false;
@@ -2196,15 +2197,34 @@ function overdue(p){return p.status!=='Finalizado'&&p.due&&new Date(p.due)<new D
 function norm(p){return{id:p.id||uid(),code:p.code||'',client:p.client||'',clientType:p.clientType||'Propietario residencial',service:p.service||'',responsible:p.responsible||'',priority:p.priority||'Media',stage:p.stage||'Solicitud',status:p.status||'Pendiente',amount:p.amount||'',start:p.start||today(),due:p.due||today(),contact:p.contact||'',notes:p.notes||'',tasks:p.tasks||[],files:p.files||[],records:p.records||[],materials:p.materials||[],after:p.after||[]}}
 data=data.map(norm);save();
 function go(id,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');render()}
-async function init(){if($('stage')){$('stage').innerHTML='';STAGES.forEach(s=>{$('stage').innerHTML+=`<option>${s}</option>`})}if($('fStage')){$('fStage').innerHTML='<option value="">Todas las etapas</option>';STAGES.forEach(s=>{$('fStage').innerHTML+=`<option>${s}</option>`})}initCloud();if(cloudClient)await cloudLoad(false);renderUser();render()}
+async function init(){
+  if($('stage')){$('stage').innerHTML='';STAGES.forEach(s=>{$('stage').innerHTML+=`<option>${s}</option>`})}
+  if($('fStage')){$('fStage').innerHTML='<option value="">Todas las etapas</option>';STAGES.forEach(s=>{$('fStage').innerHTML+=`<option>${s}</option>`})}
+  if($('fStatus')){$('fStatus').innerHTML='<option value="">Todos los estados</option><option>Pendiente</option><option>En proceso</option><option>Finalizado</option><option>Atrasado</option>'}
+  initCloud();if(cloudClient)await cloudLoad(false);renderUser();render()
+}
 function render(){stats();recent();filters();projects();docs();if(selected)detail()}
 function stats(){$('stProjects').textContent=data.length;$('stActive').textContent=data.filter(p=>p.status!=='Finalizado').length;$('stLate').textContent=data.filter(overdue).length;$('stDocs').textContent=data.reduce((a,p)=>a+p.files.length,0);$('stAfter').textContent=data.reduce((a,p)=>a+p.after.filter(x=>x.status!=='Realizado').length,0)}
 function recent(){let b=$('recentProjects');b.innerHTML='';data.slice(-4).reverse().forEach(p=>b.innerHTML+=card(p));if(!data.length)b.innerHTML='<div class="empty">Aún no hay proyectos. Registra uno nuevo o restaura los 10 proyectos de ejemplo.</div>'}
 function card(p){let st=overdue(p)?'Atrasado':p.status;return`<div class="card"><h4>${p.code} · ${p.client}</h4><p>${p.service}<br>Responsable: ${p.responsible||'-'}</p><p><span class="badge ${cls(st)}">${st}</span> <span class="badge b-stage">${p.stage}</span></p><br><div class="bar"><div style="width:${progress(p)}%"></div></div><br><button class="btn small" onclick="openDetail('${p.id}')">Gestionar</button></div>`}
-function filters(){let r=[...new Set(data.map(p=>p.responsible).filter(Boolean))];$('fResp').innerHTML='<option value="">Todos los responsables</option>'+r.map(x=>`<option>${x}</option>`).join('')}
-function filt(){let q=$('q')?.value?.toLowerCase()||'',s=$('fStage')?.value||'',e=$('fStatus')?.value||'',r=$('fResp')?.value||'';return data.filter(p=>(!q||[p.code,p.client,p.service,p.responsible].join(' ').toLowerCase().includes(q))&&(!s||p.stage===s)&&(!e||p.status===e)&&(!r||p.responsible===r))}
+function filters(){
+  const resp=$('fResp'); if(!resp) return;
+  const current=resp.value;
+  let r=[...new Set(data.map(p=>p.responsible).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  resp.innerHTML='<option value="">Todos los responsables</option>'+r.map(x=>`<option value="${x}">${x}</option>`).join('');
+  if(r.includes(current)) resp.value=current;
+}
+function filt(){
+  let q=$('q')?.value?.toLowerCase().trim()||'',s=$('fStage')?.value||'',e=$('fStatus')?.value||'',r=$('fResp')?.value||'';
+  return data.filter(p=>{
+    const realStatus=overdue(p)?'Atrasado':p.status;
+    const text=[p.code,p.client,p.service,p.responsible,p.stage,p.status].join(' ').toLowerCase();
+    return (!q||text.includes(q))&&(!s||p.stage===s)&&(!e||realStatus===e)&&(!r||p.responsible===r);
+  })
+}
 function projects(){let body=$('projectRows');if(!body)return;let rows=filt();body.innerHTML=rows.map(p=>{let st=overdue(p)?'Atrasado':p.status;return`<tr><td><b>${p.code}</b><br><span class="muted">${p.client}<br>${p.service}</span></td><td>${p.responsible||'-'}</td><td><span class="badge b-stage">${p.stage}</span></td><td><span class="badge ${cls(st)}">${st}</span></td><td><span class="muted">Inicio: ${fmt(p.start)}<br>Fin: ${fmt(p.due)}<br>${days(p.start,p.due)} día(s)</span></td><td><div class="bar"><div style="width:${progress(p)}%"></div></div><span class="muted">${progress(p)}%</span></td><td><button class="btn small" onclick="openDetail('${p.id}')">Gestionar</button> <button class="btn small light" onclick="editProject('${p.id}')">Editar</button></td></tr>`}).join('')||'<tr><td colspan="7" class="empty">No hay proyectos registrados.</td></tr>'}
-function clearFilters(){$('q').value='';$('fStage').value='';$('fStatus').value='';$('fResp').value='';projects()}
+function renderProjects(){projects()}
+function clearFilters(){if($('q'))$('q').value='';if($('fStage'))$('fStage').value='';if($('fStatus'))$('fStatus').value='';if($('fResp'))$('fResp').value='';projects()}
 function openNewProject(){selected=null;$('formTitle').textContent='Nuevo proyecto';['pid','client','responsible','amount','contact','notes'].forEach(id=>$(id).value='');$('code').value='PRY-'+String(data.length+1).padStart(3,'0');$('start').value=today();$('due').value=today();$('stage').value='Solicitud';$('status').value='Pendiente';go('projectForm')}
 function saveProject(e){e.preventDefault();let id=$('pid').value||uid(),old=data.find(p=>p.id===id)||{};let p=norm({...old,id,code:$('code').value,client:$('client').value,clientType:$('clientType').value,service:$('service').value,responsible:$('responsible').value,priority:$('priority').value,stage:$('stage').value,status:$('status').value,amount:$('amount').value,start:$('start').value,due:$('due').value,contact:$('contact').value,notes:$('notes').value});if(new Date(p.due)<new Date(p.start))return alert('La fecha fin no puede ser menor que la fecha de inicio.');let i=data.findIndex(x=>x.id===id);i>=0?data[i]=p:data.push(p);selected=p.id;save();msg('Proyecto guardado');go('detail')}
 function editProject(id){let p=data.find(x=>x.id===id);if(!p)return;selected=id;$('formTitle').textContent='Editar proyecto';['pid','code','client','clientType','service','responsible','priority','stage','status','amount','start','due','contact','notes'].forEach(k=>$(k).value=k==='pid'?p.id:p[k]||'');go('projectForm')}
@@ -2234,11 +2254,18 @@ if(currentUser){document.body.classList.remove('locked');startApp()}
 
 <script>
   // Control de versión para despliegues en Netlify/GitHub.
-  // Cuando se actualice el HTML, también se debe actualizar version.json.
-  const APP_VERSION = "1.0.1";
+  // IMPORTANTE: mantener este valor igual al de version.json en cada actualización.
+  const APP_VERSION = "1.0.6";
+  const UPDATE_SEEN_KEY = "djd_update_seen_version";
 
-  function showUpdateBanner() {
+  function closeUpdateBanner(remoteVersion){
+    if(remoteVersion) localStorage.setItem(UPDATE_SEEN_KEY, remoteVersion);
+    document.getElementById("updateBanner")?.remove();
+  }
+
+  function showUpdateBanner(remoteVersion) {
     if (document.getElementById("updateBanner")) return;
+    if (localStorage.getItem(UPDATE_SEEN_KEY) === remoteVersion) return;
     const banner = document.createElement("div");
     banner.id = "updateBanner";
     banner.style.cssText = `
@@ -2254,11 +2281,21 @@ if(currentUser){document.body.classList.remove('locked');startApp()}
         Nueva versión disponible<br>
         <span style="font-size:12px;font-weight:500;opacity:.9">Actualiza para ver los últimos cambios del sistema.</span>
       </div>
-      <button onclick="window.location.reload()" style="
-        border:0; border-radius:12px; padding:10px 13px; cursor:pointer;
-        background:white; color:#074a78; font-weight:900;">Actualizar</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button type="button" id="dismissUpdateBtn" style="
+          border:1px solid rgba(255,255,255,.35); border-radius:12px; padding:10px 12px; cursor:pointer;
+          background:transparent; color:white; font-weight:900;">Cerrar</button>
+        <button type="button" id="applyUpdateBtn" style="
+          border:0; border-radius:12px; padding:10px 13px; cursor:pointer;
+          background:white; color:#074a78; font-weight:900;">Actualizar</button>
+      </div>
     `;
     document.body.appendChild(banner);
+    document.getElementById("dismissUpdateBtn")?.addEventListener("click",()=>closeUpdateBanner(remoteVersion));
+    document.getElementById("applyUpdateBtn")?.addEventListener("click",()=>{
+      closeUpdateBanner(remoteVersion);
+      window.location.reload();
+    });
   }
 
   async function checkForUpdates() {
@@ -2267,7 +2304,7 @@ if(currentUser){document.body.classList.remove('locked');startApp()}
       if (!response.ok) return;
       const remote = await response.json();
       if (remote.version && remote.version !== APP_VERSION) {
-        showUpdateBanner();
+        showUpdateBanner(remote.version);
       }
     } catch (error) {
       console.log("No se pudo verificar actualización", error);

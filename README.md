@@ -17,3 +17,9 @@ Versión con autoguardado en nube y campos de Supabase precargados.
 4. En la web, entrar al módulo **Nube** y presionar **Guardar conexión** una sola vez.
 
 Los campos de URL y publishable key ya vienen precargados.
+
+
+## Actualización 1.0.6
+- Corrige aviso de nueva versión para que no sea persistente.
+- Agrega usuario Dann.gmail.
+- Mejora filtros de proyectos por etapa, estado, responsable y búsqueda.
