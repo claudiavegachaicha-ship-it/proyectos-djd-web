@@ -12,3 +12,7 @@ Al registrar o editar un proyecto, el sistema genera un usuario y contraseña pa
 
 ## Publicación
 Subir `index.html`, `version.json`, `_headers` y `README.md` al repositorio GitHub conectado a Netlify.
+
+
+## Versión 1.1.0
+Incluye cuentas de personal, asignación de trabajadores por proyecto y actividades por cuenta.
